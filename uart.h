@@ -3,8 +3,8 @@
 
 #include "system.h"
 
-extern bool uartRXIntFlug;
-extern bool uartTXIntFlug;
+extern bool uartRXIntFlag;
+extern bool uartTXIntFlag;
 extern uint8_t uartRXData;
 
 void uartInit();

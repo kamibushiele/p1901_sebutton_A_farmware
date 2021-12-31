@@ -38,8 +38,8 @@ static uint8_t i2cWriteAdd;
 static uint8_t i2cReadAdd;
 static i2cState_t i2cState = State_Unknown;
 static i2cMode_t i2cMode = Mode_Unknown;
-static bool i2cISRFlug = false;
-static bool i2cSReadContinueFlug;
+static bool i2cISRFlag = false;
+static bool i2cSReadContinueFlag;
 static bool i2cReadEnd;
 static bool i2cReadForceEnd;
 
@@ -112,7 +112,7 @@ static void private_i2cStart(uint8_t add, uint8_t *writeBuffer, int writeLength,
 }
 
 static void i2cSReadContinue(bool forceEnd) {
-    i2cSReadContinueFlug = true;
+    i2cSReadContinueFlag = true;
     i2cReadForceEnd = forceEnd;
 }
 
@@ -162,12 +162,12 @@ void i2c_InLoop() {
             i2cState = State_ReadDataWait;
             //breakなし
         case State_ReadDataWait://データ受信待ち
-            if (i2cISRFlug) {
-                i2cISRFlug = false;
+            if (i2cISRFlag) {
+                i2cISRFlag = false;
                 i2cReadEnd = i2cReadCursor >= i2cReadLength;
                 if (i2cMode == Mode_SRead || i2cMode == Mode_SWriteRead) {
                     i2cSBufferRead();
-                    i2cSReadContinueFlug = false;
+                    i2cSReadContinueFlag = false;
                     i2cSReadStopCallBack();
                     i2cState = State_SReceiveContinueWait;
                     //この場合だけbreakなし
@@ -180,7 +180,7 @@ void i2c_InLoop() {
                 break;
             }
         case State_SReceiveContinueWait://受信継続フラグtrue待ち
-            if (i2cSReadContinueFlug) {
+            if (i2cSReadContinueFlag) {
                 if (i2cReadForceEnd) {
                     i2cReadEnd = 1;
                 }
@@ -192,8 +192,8 @@ void i2c_InLoop() {
             i2cSendACK(i2cReadEnd);
             i2cState = State_SendACkWait;
         case State_SendACkWait://ACK送信待ち
-            if (i2cISRFlug) {
-                i2cISRFlug = false;
+            if (i2cISRFlag) {
+                i2cISRFlag = false;
                 if (i2cReadEnd) {
                     i2cStopEnable();
                     i2cState = State_StopWait;
@@ -205,13 +205,13 @@ void i2c_InLoop() {
 
 
         case State_Start://開始
-            i2cISRFlug = false;
+            i2cISRFlag = false;
             i2cStartEnable();
             i2cState = State_StartWait;
             //breakなし
         case State_StartWait://開始確認待ち
-            if (i2cISRFlug) {
-                i2cISRFlug = false;
+            if (i2cISRFlag) {
+                i2cISRFlag = false;
                 switch (i2cMode) {
                     case Mode_Read:
                     case Mode_SRead:
@@ -225,8 +225,8 @@ void i2c_InLoop() {
             }
             break;
         case State_SendADDWait1://1回目のアドレス送信待ち
-            if (i2cISRFlug) {
-                i2cISRFlug = false;
+            if (i2cISRFlag) {
+                i2cISRFlag = false;
                 if (!i2cReadAck()) {
                     switch (i2cMode) {
                         case Mode_Read:
@@ -247,8 +247,8 @@ void i2c_InLoop() {
             i2cState = State_SendDataWait;
             //breakなし
         case State_SendDataWait://データ送信終了待ち
-            if (i2cISRFlug) {
-                i2cISRFlug = false;
+            if (i2cISRFlag) {
+                i2cISRFlag = false;
                 if (i2cWriteCursor >= i2cWriteLength) {
                     if (i2cMode == Mode_Write) {
                         i2cStopEnable();
@@ -267,15 +267,15 @@ void i2c_InLoop() {
             i2cState = State_RestartWait;
             //breakなし
         case State_RestartWait://再開待ち
-            if (i2cISRFlug) {
-                i2cISRFlug = false;
+            if (i2cISRFlag) {
+                i2cISRFlag = false;
                 i2cSend(i2cReadAdd);
                 i2cState = State_SendADDWait2;
             }
             break;
         case State_SendADDWait2://2回目のアドレス送信待ち
-            if (i2cISRFlug) {
-                i2cISRFlug = false;
+            if (i2cISRFlag) {
+                i2cISRFlag = false;
                 if (!i2cReadAck()) {
                     i2cState = State_ReceiveData;
                 } else {
@@ -285,8 +285,8 @@ void i2c_InLoop() {
             break;
 
         case State_StopWait:
-            if (i2cISRFlug) {
-                i2cISRFlug = false;
+            if (i2cISRFlag) {
+                i2cISRFlag = false;
                 i2cState = State_Unknown;
                 i2cSequenceEndCallBack();
             }
@@ -297,5 +297,5 @@ void i2c_InLoop() {
 }
 
 void i2c_Interrupt() {
-    i2cISRFlug = true;
+    i2cISRFlag = true;
 }

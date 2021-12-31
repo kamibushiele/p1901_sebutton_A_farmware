@@ -24,13 +24,13 @@ static void swapBuffer(uint8_t **buffer, uint8_t *buffer1, uint8_t * buffer2) {
     }
 }
 
-void (*eeprom_Init(uint8_t chipAdd, void (*sequencteEndFlug)(), void(*sReadStopCallBack)()))(bool) {
+void (*eeprom_Init(uint8_t chipAdd, void (*sequencteEndFlag)(), void(*sReadStopCallBack)()))(bool) {
     eeprom_InLoop = i2c_InLoop;
     eepromi2cadd = chipAdd;
     eepromCursor = 0;
     bufferCursor = 0;
     swapBuffer(&buffer, buffer1, buffer2);
-    return i2c_Init(sequencteEndFlug, sReadStopCallBack);
+    return i2c_Init(sequencteEndFlag, sReadStopCallBack);
 }
 
 void eeprom_SetCursor(int address){

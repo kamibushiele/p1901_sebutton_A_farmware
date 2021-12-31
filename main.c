@@ -38,10 +38,10 @@ typedef enum {
 
 static state_t state;
 static uint8_t pcmValue;//読み込んだ1サンプルの振幅
-static bool eepromSequencteEndFlug;
-static bool eepromSReadStopFlug;
-static bool intFlug;//ボタンが押されたらtrue
-static bool playSoundEnFlug;
+static bool eepromSequencteEndFlag;
+static bool eepromSReadStopFlag;
+static bool intFlag;//ボタンが押されたらtrue
+static bool playSoundEnFlag;
 static uint16_t tmr0cnt;
 static void(*eepromSReadContinue)(bool);
 
@@ -117,12 +117,12 @@ void main(void) {
             case ReadHeader:
                 eepromCursor = 0;
                 eeprom_Read(&eepromCursor, buffer, PCM_HEADER_LEN + PCM_SND_NUM_LEN);
-                eepromSequencteEndFlug = false;
+                eepromSequencteEndFlag = false;
                 state = ReadHeaderWait;
                 //breakなし
             case ReadHeaderWait:
-                if (eepromSequencteEndFlug) {
-                    eepromSequencteEndFlug = false;
+                if (eepromSequencteEndFlag) {
+                    eepromSequencteEndFlag = false;
                     if (!strBufComp(buffer, PCM_HEADER)) {
                         state = End;//不正なヘッダ
                         break;
@@ -137,8 +137,8 @@ void main(void) {
                 }
                 break;
             case ReadSoundInfoWait:
-                if (eepromSequencteEndFlug) {
-                    eepromSequencteEndFlug = false;
+                if (eepromSequencteEndFlag) {
+                    eepromSequencteEndFlag = false;
                     int DataOffset = PCM_HEADER_LEN + PCM_SND_NUM_LEN + PCM_SND_INFO_LEN*pcmNofSounds;
                     for(i = 0;i<pcmNofSounds;i++){
                         int infoOffset = PCM_SND_INFO_LEN*i;
@@ -166,30 +166,30 @@ void main(void) {
                 if(pcmSound >= pcmNofSounds){
                     pcmSound = 0;
                 }
-                playSoundEnFlug = false;
-                intFlug = false;
+                playSoundEnFlag = false;
+                intFlag = false;
                 pwm_On(false);
                 state = WaitPlayButton;
                 sleep();
                 break;
             case WaitPlayButton:
-                if (intFlug) {
+                if (intFlag) {
                     if(PORTCbits.RC2 == 1){
                         state = WaitPreamble;
                         break;
                     }
                     eepromCursor = pcmSounds[pcmSound].startAdd;
                     eeprom_SRead(&eepromCursor, &pcmValue, pcmSounds[pcmSound].length);
-                    eepromSequencteEndFlug = false;
-                    playSoundEnFlug = true;
+                    eepromSequencteEndFlag = false;
+                    playSoundEnFlag = true;
                     pwm_On(true);
                     state = Play;
                 }
                 break;
             ///////////////////書き込み////////////////////////
             case WaitPreamble:
-                if (uartRXIntFlug) {
-                    uartRXIntFlug = false;
+                if (uartRXIntFlag) {
+                    uartRXIntFlag = false;
                     buffer[bufferCursor] = uartRXData;
                     if (strLoopBufComp(buffer, BUFFER_LEN, bufferCursor, PCMWritePreamble, PCMWritePreambleLen)) {
                         uartWrite('K');
@@ -204,8 +204,8 @@ void main(void) {
                 }
                 break;
             case WaitBinSize:
-                if (uartRXIntFlug) {
-                    uartRXIntFlug = false;
+                if (uartRXIntFlag) {
+                    uartRXIntFlag = false;
                     buffer[bufferCursor] = uartRXData;
                     bufferCursor++;
                     if (bufferCursor >= 4) {
@@ -223,13 +223,13 @@ void main(void) {
                         bufferCursor = 0;
                         eepromCursor = 0;
                         eeprom_SetCursor(0);
-                        eepromSequencteEndFlug = true;//書き込んでいないので次のWriteは無条件で開始
+                        eepromSequencteEndFlag = true;//書き込んでいないので次のWriteは無条件で開始
                     }
                 }
                 break;
             case WaitBlock:
-            if (uartRXIntFlug) {
-                uartRXIntFlug = false;
+            if (uartRXIntFlag) {
+                uartRXIntFlag = false;
                 buffer[bufferCursor] = uartRXData;
                 bufferCursor++;
                 eepromCursor++;
@@ -239,9 +239,9 @@ void main(void) {
             }
             break;
             case WaitEEPROMWriteEnd:
-                if (eepromSequencteEndFlug) {
+                if (eepromSequencteEndFlag) {
                     eeprom_Write(buffer, bufferCursor, true);
-                    eepromSequencteEndFlug = false;
+                    eepromSequencteEndFlag = false;
                     bufferCursor = 0;
                     if (eepromCursor >= binSize) {//バイナリ終了
                         state = WaitEEPROMWriteEndLast;
@@ -252,7 +252,7 @@ void main(void) {
                 }
                 break;
             case WaitEEPROMWriteEndLast:
-                if (eepromSequencteEndFlug) {
+                if (eepromSequencteEndFlag) {
                     uartWrite('K');
                     state = ReadHeader;
                 }
@@ -262,17 +262,17 @@ void main(void) {
             //////////////////////////ダンプ//////////////////////////////////////////
             case Dump_Start:
                 //                eepromRead(0, buffer, 64);
-                if (intFlug) {
+                if (intFlag) {
                     eeprom_SRead(0, buffer, 1000);
                     state = Dump_Read;
                 }
             case Dump_Read:
-                if (eepromSReadStopFlug) {
-                    eepromSReadStopFlug = false;
+                if (eepromSReadStopFlag) {
+                    eepromSReadStopFlag = false;
                     eepromSReadContinue(false);
                     uartWrite(buffer[0]);
-                } else if (eepromSequencteEndFlug) {
-                    intFlug = false;
+                } else if (eepromSequencteEndFlag) {
+                    intFlag = false;
                     state = Dump_Start;
                 }
                 break;
@@ -280,9 +280,9 @@ void main(void) {
     }
 }
 //    while (1) {
-//        if (uartRXIntFlug) {
+//        if (uartRXIntFlag) {
 //            read_data = uartRXData;
-//            uartRXIntFlug = false;
+//            uartRXIntFlag = false;
 //            if (read_data == 'R') {
 //                data[0] = 0;
 //                data[1] = 0;
@@ -314,7 +314,7 @@ static void wakeup() {
     TMR0IE = 1;
 }
 static void privateTMR0ISR() {
-    if (playSoundEnFlug) {
+    if (playSoundEnFlag) {
         eepromSReadContinue(false);
         pwm_SetDuty(pcmValue);
     }
@@ -328,7 +328,7 @@ static void privateINTISR() {
     wakeup();
 //    if (tmr0cnt >= 1600) {
         tmr0cnt = 0;
-        intFlug = true;
+        intFlag = true;
         //        if (state == Play) {
         //            state = PlayReady;
         //        }
@@ -336,12 +336,12 @@ static void privateINTISR() {
 }
 
 static void eepromSequencteEndCallBack() {
-    eepromSequencteEndFlug = true;
+    eepromSequencteEndFlag = true;
     if (state == Play) {
         state = PlayReady;
     }
 }
 
 static void eepromSReadStopCallBack() {
-    eepromSReadStopFlug = true;
+    eepromSReadStopFlag = true;
 }

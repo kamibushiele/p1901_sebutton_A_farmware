@@ -10,7 +10,7 @@
 extern void (* eeprom_InLoop)();
 extern const uint8_t eeprom_PageLen;
 extern const uint8_t eeprom_AddLen;
-void (*eeprom_Init(uint8_t chipAdd, void (*sequencteEndFlug)(), void(*sReadStopCallBack)()))(bool);
+void (*eeprom_Init(uint8_t chipAdd, void (*sequencteEndFlag)(), void(*sReadStopCallBack)()))(bool);
 //void eeprom_InLoop();
 bool eeprom_Write(uint8_t data[], int dataLen, bool forceWrite);
 void eeprom_Read(int *address, uint8_t *data, int dataLen);
