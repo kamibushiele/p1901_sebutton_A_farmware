@@ -57,13 +57,13 @@ void main(void) {
         int length;
         uint8_t weight;
     } pcmBlock_t;
-    uint8_t buffer[CHUNK_MAX_LEN_DEF] = {};
+    uint8_t buffer[CHUNK_MAX_LEN_DEF];
     uint8_t bufferCursor = 0;
     int eepromCursor = 0;
     int pcmBlockCursor = 0;
     int pcmBlockSize = 0;
 
-    pcmBlock_t pcmBlock[3] = {};
+    pcmBlock_t pcmBlock[3];
     uint8_t pcmNofBlock = 0;
     uint8_t pcmSound = 0;
 

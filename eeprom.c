@@ -3,8 +3,8 @@
 #include "i2c.h"
 
 static uint8_t eepromi2cadd;
-static uint8_t buffer1[PAGE_LEN_DEF + EEPROM_ADDLEN_DEF] = {};
-static uint8_t buffer2[PAGE_LEN_DEF + EEPROM_ADDLEN_DEF] = {}; //(64+2)*2配列にすると容量オーバーでビルドエラー
+static uint8_t buffer1[PAGE_LEN_DEF + EEPROM_ADDLEN_DEF];
+static uint8_t buffer2[PAGE_LEN_DEF + EEPROM_ADDLEN_DEF]; //(64+2)*2配列にすると容量オーバーでビルドエラー
 static uint8_t * buffer;
 static int eepromCursor;
 static int bufferCursor;
