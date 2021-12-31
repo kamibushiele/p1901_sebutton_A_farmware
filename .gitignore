@@ -3,3 +3,4 @@ debug/
 dist/
 .vscode/
 *.txt
+nbproject/

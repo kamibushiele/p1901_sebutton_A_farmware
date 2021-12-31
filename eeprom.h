@@ -5,6 +5,7 @@
 
 #define PAGE_LEN_DEF 64
 #define EEPROM_ADDLEN_DEF 2
+#define EEPROM_MAX_SIZE 0x8000
 
 extern void (* eeprom_InLoop)();
 extern const uint8_t eeprom_PageLen;
