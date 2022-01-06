@@ -6,10 +6,11 @@
 #include "eeprom.h"
 #include "i2c.h"
 #include "extint.h"
+#include "adc.h"
 #include <stdio.h>
 
 #define BLOCK_MAX_LEN_DEF PAGE_LEN_DEF
-#define MAX_NUM_SOUNDS 3
+#define MAX_NUM_SOUNDS 8
 static const uint8_t BUFFER_LEN = BLOCK_MAX_LEN_DEF;
 static const uint8_t PCM_HEADER_LEN = 3;
 static const uint8_t PCM_SND_NUM_LEN = 1;
@@ -59,6 +60,7 @@ void main(void) {
         int startAdd;
         int length;
         uint8_t weight;
+        uint16_t bingo;
     } pcmBlock_t;
     uint8_t buffer[BLOCK_MAX_LEN_DEF];//多目的バッファ
     uint8_t bufferCursor = 0;//多目的バッファのカーソル
@@ -66,11 +68,12 @@ void main(void) {
     uint32_t binSize = 0;//バイナリ全体のサイズ
 
     pcmBlock_t pcmSounds[MAX_NUM_SOUNDS];
-    uint8_t pcmNofSounds = 0;
-    uint8_t pcmSound = 0;   //再生するSound
+    uint8_t pcmNofSounds = 0;   //Soundの数
+    uint8_t pcmSound = 0;       //再生するSoundのIndex
+    int weightSum = 0;          //Soundsのweightの和
 
     int i;
-    char string[30];
+    uint16_t random;
 
     __delay_ms(500);
     systemInit();
@@ -81,34 +84,11 @@ void main(void) {
     extint_Init(privateINTISR);
     eepromSReadContinue = eeprom_Init(0x50, eepromSequencteEndCallBack, eepromSReadStopCallBack);
     uartInit();
+    adc_Init();
+    srand(adc_Get());//空ピンからAD読んでRandのSeedに設定
     state = ReadHeader;
-    // state = WaitPreamble;
-    // state = Dump_Start;
-
-    //    pwmSetDuty(0x80);
-    //    __delay_ms(5);
-    //        uartWriteStr("_start\n");
-
-    //    bool out;
-    //    while (1) {
-    //        if (tmr0Flag) {
-    //            tmr0Flag = false;
-    //            if (out) {
-    //                pwmSetDuty(256);
-    //            } else {
-    //                pwmSetDuty(0);
-    //            }
-    //            out = !out;
-    //        }
-    //    }
     while (1) {
-        #if _DEBUG
-        LATA2 = 0;
-        #endif
         eeprom_InLoop();
-        #if _DEBUG
-        LATA2 = 1;
-        #endif
         switch (state) {
             ///////////////////再生////////////////////////
             case Play://動作軽減のためなるべくmain loopでは処理しない
@@ -124,12 +104,12 @@ void main(void) {
                 if (eepromSequencteEndFlag) {
                     eepromSequencteEndFlag = false;
                     if (!strBufComp(buffer, PCM_HEADER)) {
-                        state = End;//不正なヘッダ
+                        state = WaitPreamble;//不正なヘッダ
                         break;
                     }
                     pcmNofSounds = buffer[PCM_HEADER_LEN + 0];//soundの数
                     if(pcmNofSounds > MAX_NUM_SOUNDS){
-                        state = End;//不正な数のサウンド
+                        state = WaitPreamble;//不正な数のサウンド
                         break;
                     }
                     eeprom_Read(&eepromCursor, buffer, PCM_SND_INFO_LEN*pcmNofSounds);
@@ -140,31 +120,30 @@ void main(void) {
                 if (eepromSequencteEndFlag) {
                     eepromSequencteEndFlag = false;
                     int DataOffset = PCM_HEADER_LEN + PCM_SND_NUM_LEN + PCM_SND_INFO_LEN*pcmNofSounds;
+                    weightSum = 0;
                     for(i = 0;i<pcmNofSounds;i++){
                         int infoOffset = PCM_SND_INFO_LEN*i;
                         pcmSounds[i].startAdd = DataOffset;
                         pcmSounds[i].length = buffer[infoOffset] | (buffer[infoOffset+1] << 8);
                         pcmSounds[i].weight = buffer[infoOffset+2];
                         DataOffset += pcmSounds[i].length;
+                        weightSum += pcmSounds[i].weight;
                     }
-                    pcmSound = pcmNofSounds;
+                    uint16_t prevBingo = 0;
+                    for(i = 0;i<pcmNofSounds;i++){
+                        pcmSounds[i].bingo = prevBingo + pcmSounds[i].weight;
+                        prevBingo = pcmSounds[i].bingo;
+                    }
                     state = PlayReady;
-                    // binSize = buffer[0] | (buffer[1] << 8);
-                    // if (binSize != 0) {
-                    //     pcmSounds[pcmNofSounds].startAdd = eepromCursor - PCM_SND_INFO_LEN;
-                    //     pcmSounds[pcmNofSounds].length = binSize;
-                    //     pcmSounds[pcmNofSounds].weight = buffer[4];
-                    //     pcmNofSounds++;
-                    //     state = PlayReady;
-                    // } else {
-                    //     state = End;
-                    // }
                 }
                 break;
             case PlayReady:
-                pcmSound ++;
-                if(pcmSound >= pcmNofSounds){
-                    pcmSound = 0;
+                random = ((uint16_t)rand())%weightSum;
+                for(i = 0;i<pcmNofSounds;i++){
+                    if(random < pcmSounds[i].bingo || i+1 == pcmNofSounds){
+                        pcmSound = i;
+                        break;
+                    }
                 }
                 playSoundEnFlag = false;
                 intFlag = false;
@@ -279,32 +258,6 @@ void main(void) {
         }
     }
 }
-//    while (1) {
-//        if (uartRXIntFlag) {
-//            read_data = uartRXData;
-//            uartRXIntFlag = false;
-//            if (read_data == 'R') {
-//                data[0] = 0;
-//                data[1] = 0;
-//                i2cDataWriteRead(add, data, 2, &buf, 1);
-//                uartWrite(buf);
-//                for (i = 1; i < dataLen; i++) {
-//                    i2cDataRead(add, &buf, 1);
-//                    uartWrite(buf);
-//                }
-//            } else {
-//                LATA2 = 1;
-//                data[0] = dataLen >> 8;
-//                data[1] = dataLen & 0xFF;
-//                data[2] = read_data;
-//                i2cDataWrite(add, data, 3);
-//                dataLen++;
-//                i2cACKPool(add);
-//                LATA2 = 0;
-//            }
-//        }
-//    }
-//}
 
 static void sleep() {
     TMR0IE = 0;
@@ -318,7 +271,6 @@ static void privateTMR0ISR() {
         eepromSReadContinue(false);
         pwm_SetDuty(pcmValue);
     }
-    //        LATA2 = !RA2;
     if (tmr0cnt < 0xffff) {
         tmr0cnt++;
     }

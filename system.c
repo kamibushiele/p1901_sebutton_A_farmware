@@ -46,9 +46,9 @@ void systemInit() {
      *****************/
     LATA = 0;
     LATC = 0;
-    ANSELA = 0x00;
+    ANSELA = 0x04;//2
     ANSELC = 0x00;
-    TRISA = 0x20;//5
+    TRISA = 0x24;//5,2
     TRISC = 0x27;//5,2,1,0
     WPUA = 0x20;//5
     WPUC = 0x20;//5
