@@ -72,6 +72,7 @@ void main(void) {
     uint8_t pcmSound = 0;       //再生するSoundのIndex
     int weightSum = 0;          //Soundsのweightの和
 
+    bool random_mode = false;//trueならランダムfalseならシーケンシャル
     int i;
     uint16_t random;
 
@@ -119,6 +120,7 @@ void main(void) {
             case ReadSoundInfoWait:
                 if (eepromSequencteEndFlag) {
                     eepromSequencteEndFlag = false;
+                    random_mode = true;
                     int DataOffset = PCM_HEADER_LEN + PCM_SND_NUM_LEN + PCM_SND_INFO_LEN*pcmNofSounds;
                     weightSum = 0;
                     for(i = 0;i<pcmNofSounds;i++){
@@ -128,28 +130,44 @@ void main(void) {
                         pcmSounds[i].weight = buffer[infoOffset+2];
                         DataOffset += pcmSounds[i].length;
                         weightSum += pcmSounds[i].weight;
+                        if(pcmSounds[i].weight == 0){//weightが0のが1つでもあれば
+                            random_mode = false;
+                        }
                     }
-                    uint16_t prevBingo = 0;
-                    for(i = 0;i<pcmNofSounds;i++){
-                        pcmSounds[i].bingo = prevBingo + pcmSounds[i].weight;
-                        prevBingo = pcmSounds[i].bingo;
+                    if(random_mode){
+                        uint16_t prevBingo = 0;
+                        for(i = 0;i<pcmNofSounds;i++){
+                            pcmSounds[i].bingo = prevBingo + pcmSounds[i].weight;
+                            prevBingo = pcmSounds[i].bingo;
+                        }
+                    }else{
+                        pcmSound = pcmNofSounds;
                     }
+                    intFlag = false;
                     state = PlayReady;
                 }
                 break;
             case PlayReady:
-                random = ((uint16_t)rand())%weightSum;
-                for(i = 0;i<pcmNofSounds;i++){
-                    if(random < pcmSounds[i].bingo || i+1 == pcmNofSounds){
-                        pcmSound = i;
-                        break;
+                if(random_mode){
+                    random = ((uint16_t)rand())%weightSum;
+                    for(i = 0;i<pcmNofSounds;i++){
+                        if(random < pcmSounds[i].bingo || i+1 == pcmNofSounds){
+                            pcmSound = i;
+                            break;
+                        }
+                    }
+                }else{
+                    pcmSound ++;
+                    if(pcmSound >= pcmNofSounds){
+                        pcmSound = 0;
                     }
                 }
                 playSoundEnFlag = false;
-                intFlag = false;
                 pwm_On(false);
                 state = WaitPlayButton;
-                sleep();
+                if(!intFlag){
+                    sleep();
+                }
                 break;
             case WaitPlayButton:
                 if (intFlag) {
@@ -157,6 +175,7 @@ void main(void) {
                         state = WaitPreamble;
                         break;
                     }
+                    intFlag = false;
                     eepromCursor = pcmSounds[pcmSound].startAdd;
                     eeprom_SRead(&eepromCursor, &pcmValue, pcmSounds[pcmSound].length);
                     eepromSequencteEndFlag = false;
@@ -262,14 +281,19 @@ void main(void) {
 static void sleep() {
     TMR0IE = 0;
     SLEEP();
+    tmr0cnt = 0xffff;//sleep復帰後はチャタリングタイマーを無視してintFlagを立てる
 }
 static void wakeup() {
     TMR0IE = 1;
 }
 static void privateTMR0ISR() {
     if (playSoundEnFlag) {
-        eepromSReadContinue(false);
-        pwm_SetDuty(pcmValue);
+        if(intFlag){
+            eepromSReadContinue(true);//強制終了
+        }else{
+            eepromSReadContinue(false);
+            pwm_SetDuty(pcmValue);
+        }
     }
     if (tmr0cnt < 0xffff) {
         tmr0cnt++;
@@ -278,13 +302,13 @@ static void privateTMR0ISR() {
 
 static void privateINTISR() {
     wakeup();
-//    if (tmr0cnt >= 1600) {
+   if (tmr0cnt >= 3200) {
         tmr0cnt = 0;
         intFlag = true;
         //        if (state == Play) {
         //            state = PlayReady;
         //        }
-//    }
+   }
 }
 
 static void eepromSequencteEndCallBack() {
