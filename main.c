@@ -280,8 +280,8 @@ void main(void) {
 
 static void sleep() {
     TMR0IE = 0;
-    SLEEP();
     tmr0cnt = 0xffff;//sleep復帰後はチャタリングタイマーを無視してintFlagを立てる
+    SLEEP();
 }
 static void wakeup() {
     TMR0IE = 1;
