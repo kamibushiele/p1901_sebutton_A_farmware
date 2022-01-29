@@ -29,6 +29,7 @@ typedef enum {
     PlayReady,
     WaitPlayButton,
     Play,
+    EnableUart,//UART開始準備
     WaitPreamble,//UART書き込み待ち
     WaitBinSize, //UART書き込みサイズ待ち
     WaitBlock,  //UARTブロック待ち
@@ -105,12 +106,12 @@ void main(void) {
                 if (eepromSequencteEndFlag) {
                     eepromSequencteEndFlag = false;
                     if (!strBufComp(buffer, PCM_HEADER)) {
-                        state = WaitPreamble;//不正なヘッダ
+                        state = EnableUart;//不正なヘッダ
                         break;
                     }
                     pcmNofSounds = buffer[PCM_HEADER_LEN + 0];//soundの数
                     if(pcmNofSounds > MAX_NUM_SOUNDS){
-                        state = WaitPreamble;//不正な数のサウンド
+                        state = EnableUart;//不正な数のサウンド
                         break;
                     }
                     eeprom_Read(&eepromCursor, buffer, PCM_SND_INFO_LEN*pcmNofSounds);
@@ -172,7 +173,7 @@ void main(void) {
             case WaitPlayButton:
                 if (intFlag) {
                     if(PORTCbits.RC2 == 1){
-                        state = WaitPreamble;
+                        state = EnableUart;
                         break;
                     }
                     intFlag = false;
@@ -185,6 +186,10 @@ void main(void) {
                 }
                 break;
             ///////////////////書き込み////////////////////////
+            case EnableUart:
+                uartPinEnable(true);
+                state = WaitPreamble;
+                // breakなし
             case WaitPreamble:
                 if (uartRXIntFlag) {
                     uartRXIntFlag = false;
@@ -252,6 +257,8 @@ void main(void) {
             case WaitEEPROMWriteEndLast:
                 if (eepromSequencteEndFlag) {
                     uartWrite('K');
+                    __delay_ms(500);//送信直後にTXがLに落ちると書き込み側が0x00を解釈して誤認識する
+                    uartPinEnable(false);
                     state = ReadHeader;
                 }
                 break;

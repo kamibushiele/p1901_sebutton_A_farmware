@@ -8,6 +8,7 @@
 #define _XTAL_FREQ 16000000
 
 void systemInit();
+void uartPinEnable(bool enable);
 
 #endif	/* SYSTEM_H */
 

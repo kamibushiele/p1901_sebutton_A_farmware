@@ -6,6 +6,7 @@ bool uartTXIntFlag;
 uint8_t uartRXData;
 
 void uartInit() {
+    uartPinEnable(false);
     //_XTAL_FREQ = 16M
     TX1STA = 0b10100100; //master, 8bit, Asynchronous, HighSpeed
     RC1STA = 0b10010000; //8bit

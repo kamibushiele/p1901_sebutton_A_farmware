@@ -48,9 +48,9 @@ void systemInit() {
     LATC = 0;
     ANSELA = 0x04;//2
     ANSELC = 0x00;
-    TRISA = 0x24;//5,2
+    TRISA = 0x34;//5,4,2
     TRISC = 0x27;//5,2,1,0
-    WPUA = 0x20;//5
+    WPUA = 0x30;//5,4
     WPUC = 0x20;//5
     ODCONA = 0x00;
     ODCONC = 0x03;//1,0
@@ -129,7 +129,7 @@ void systemInit() {
      */
     RC0PPS = 0b11000; // SCL→RC0
     RC1PPS = 0b11001; // SDA→RC1
-    RA4PPS = 0b10100; // TX→RA4
+    // RA4PPS = 0b10100; // TX→RA4//uartPinEnableで設定
     RC4PPS = 0b00100; //CLC1→RC4;
     RC3PPS = 0b00101; //CLC2→RC3;
 
@@ -155,6 +155,18 @@ void systemInit() {
     ADIE = 0; //ADC割り込み許可
     RCIE = 1; //UART受信割り込み
     TXIE = 0; //UART送信割り込み
+}
+
+void uartPinEnable(bool enable){
+    if(enable){
+        TRISAbits.TRISA4 = 0;
+        WPUAbits.WPUA4 = 0;
+        RA4PPS = 0b10100; // TX→RA4
+    }else{
+        TRISAbits.TRISA4 = 1;
+        WPUAbits.WPUA4 = 1;
+        RA4PPS = 0b00000; // LATA4→RA4
+    }
 }
 
 void __interrupt() isr(void) {
