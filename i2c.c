@@ -105,7 +105,7 @@ static void private_i2cStart(uint8_t add, uint8_t *writeBuffer, int writeLength,
     i2cWriteLength = writeLength;
     i2cWriteCursor = 0;
     i2cReadBuffer = readBuffer;
-    i2cReadLength = readLength;
+    i2cReadLength = readLength - 1;//カーソルと同じになったら終了するため長さ-1する
     i2cReadCursor = 0;
     i2cSetAdd(add);
     i2cState = State_Start;

@@ -9,6 +9,8 @@
 #include "adc.h"
 #include <stdio.h>
 
+#define DUMP_MODE 0
+
 #define BLOCK_MAX_LEN_DEF PAGE_LEN_DEF
 #define MAX_NUM_SOUNDS 8
 static const uint8_t BUFFER_LEN = BLOCK_MAX_LEN_DEF;
@@ -88,7 +90,12 @@ void main(void) {
     uartInit();
     adc_Init();
     srand(adc_Get());//空ピンからAD読んでRandのSeedに設定
+#if DUMP_MODE
+    uartPinEnable(true);
+    state = Dump_Start;
+#else
     state = ReadHeader;
+#endif
     while (1) {
         eeprom_InLoop();
         switch (state) {
