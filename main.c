@@ -219,10 +219,10 @@ void main(void) {
                     buffer[bufferCursor] = uartRXData;
                     bufferCursor++;
                     if (bufferCursor >= 4) {
-                        binSize = buffer[0];
-                        binSize |= buffer[1] << 8;
-                        binSize |= buffer[2] << 16;
-                        binSize |= buffer[3] << 32;
+                        binSize = buffer[0] & 0xFF;
+                        binSize |= ((uint32_t)buffer[1] & 0xFF) << 8;
+                        binSize |= ((uint32_t)buffer[2] & 0xFF) << 16;
+                        binSize |= ((uint32_t)buffer[3] & 0xFF) << 24;
                         if(binSize > EEPROM_MAX_SIZE){
                             uartWrite('E');
                             state = WaitPreamble;
