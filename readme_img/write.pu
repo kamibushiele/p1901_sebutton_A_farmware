@@ -1,0 +1,11 @@
+@startuml write
+skinparam sequenceMessageAlign direction
+Host -> Target: "FLASH"
+Target --> Host: "K"
+Host -> Target: ROMデータサイズ (4 Byte Little endian)
+Target --> Host: "K"
+loop
+    Host -> Target: ROMデータ(最大64 Byte)
+    Target --> Host: "K"
+end
+@enduml
