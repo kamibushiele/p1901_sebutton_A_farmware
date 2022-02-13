@@ -37,36 +37,31 @@
 **音声個数は8個まで**。
 
 最大合計音声長は音声個数をNとすると
-```math
 
-2^{15}-(4+3N)[\mathrm{sample}]
+<img src="https://latex.codecogs.com/svg.image?2^{15}-(4&plus;3N)[\mathrm{sample}]" alt = "2^{15}-(4&plus;3N)[\mathrm{sample}]"/>
 
-```
 秒にすると
-```math
 
-\frac{2^{15}-(4+3N)}{8\times10^3}\simeq4.09[\mathrm{sec}]
-
-```
+<img src="https://latex.codecogs.com/svg.image?\frac{2^{15}-(4+3N)}{8\times10^3}\simeq4.09[\mathrm{sec}]" alt = "\frac{2^{15}-(4+3N)}{8\times10^3}\simeq4.09[\mathrm{sec}]"/>
 
 ## ROM内データ仕様
 
 | 項目 | 開始アドレス | 長さ(Byte) | 内容 |
 |-|-|-|-|
 | ヘッダ            | 0     | 3 |ASCII文字で"PCM"|
-| 音声個数          | 3     | 1 |$N$|
-| 音声0サイズ       | 4     | 2 |$L_0$|
-| 音声0重み         | 6     | 1 |$W_0$|
-| 音声1サイズ       | 7     | 2 |$L_1$|
-| 音声1重み         | 9     | 1 |$W_1$|
+| 音声個数          | 3     | 1 |<img src="https://latex.codecogs.com/svg.image?N" alt = "N"/>|
+| 音声0サイズ       | 4     | 2 |<img src="https://latex.codecogs.com/svg.image?L_0" alt = "L_0"/>|
+| 音声0重み         | 6     | 1 |<img src="https://latex.codecogs.com/svg.image?W_0" alt = "W_0"/>|
+| 音声1サイズ       | 7     | 2 |<img src="https://latex.codecogs.com/svg.image?L_1" alt = "L_1"/>|
+| 音声1重み         | 9     | 1 |<img src="https://latex.codecogs.com/svg.image?W_1" alt = "W_1"/>|
 | ...               |       |   ||
-| 音声$n$サイズ     | $4 + 3n$          | 2 |$L_n$|
-| 音声$n$重み       | $4 + 3n+1$        | 1 |$W_n$|
+| 音声<img src="https://latex.codecogs.com/svg.image?n" alt = "n"/>サイズ     | <img src="https://latex.codecogs.com/svg.image?4+3n" alt = "4+3n"/>          | 2 |<img src="https://latex.codecogs.com/svg.image?L_n" alt = "L_n"/>|
+| 音声<img src="https://latex.codecogs.com/svg.image?n" alt = "n"/>重み       | <img src="https://latex.codecogs.com/svg.image?4+3n+1" alt = "4+3n+1"/>        | 1 |<img src="https://latex.codecogs.com/svg.image?W_n" alt = "W_n"/>|
 | ...               |                   |   ||
-| 音声0データ       | $4 + 3N$          | $L_0$ ||
-| 音声1データ       | $4 + 3N + L_0$    | $L_1$ ||
+| 音声0データ       | <img src="https://latex.codecogs.com/svg.image?4 + 3N" alt = "4 + 3N"/>          | <img src="https://latex.codecogs.com/svg.image?L_0" alt = "L_0"/> ||
+| 音声1データ       | <img src="https://latex.codecogs.com/svg.image?4 + 3N + L_0" alt = "4 + 3N + L_0"/>    | <img src="https://latex.codecogs.com/svg.image?L_1" alt = "L_1"/> ||
 | ...               |                   |   ||
-| 音声nデータ       | $4 + 3N + \sum_{k=0}^{n-1}{L_k}$  | $L_n$||
+| 音声nデータ       | <img src="https://latex.codecogs.com/svg.image?4 + 3N + \sum_{k=0}^{n-1}{L_k}" alt = "4 + 3N + \sum_{k=0}^{n-1}{L_k}"/>  | <img src="https://latex.codecogs.com/svg.image?L_n" alt = "L_n"/>||
 | ...               |                   |   ||
 
 音声データはヘッダ部などを持たない純粋なデータのみ。
@@ -77,9 +72,7 @@
 重みはその音声が再生される割合で、すべての重みが0以外の場合に重みに応じた確率で音声が再生される。
 音声nが再生される確率は
 
-```math
-\frac{W_n}{\sum_{k=0}^{N-1}(W_k)}
-```
+<img src="https://latex.codecogs.com/svg.image?\frac{W_n}{\sum_{k=0}^{N-1}(W_k)}" alt = "\frac{W_n}{\sum_{k=0}^{N-1}(W_k)}"/>
 
 となる。
 
