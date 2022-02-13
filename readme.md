@@ -58,10 +58,10 @@
 | 音声<img src="https://latex.codecogs.com/svg.image?n" alt = "n"/>サイズ     | <img src="https://latex.codecogs.com/svg.image?4+3n" alt = "4+3n"/>          | 2 |<img src="https://latex.codecogs.com/svg.image?L_n" alt = "L_n"/>|
 | 音声<img src="https://latex.codecogs.com/svg.image?n" alt = "n"/>重み       | <img src="https://latex.codecogs.com/svg.image?4+3n+1" alt = "4+3n+1"/>        | 1 |<img src="https://latex.codecogs.com/svg.image?W_n" alt = "W_n"/>|
 | ...               |                   |   ||
-| 音声0データ       | <img src="https://latex.codecogs.com/svg.image?4 + 3N" alt = "4 + 3N"/>          | <img src="https://latex.codecogs.com/svg.image?L_0" alt = "L_0"/> ||
-| 音声1データ       | <img src="https://latex.codecogs.com/svg.image?4 + 3N + L_0" alt = "4 + 3N + L_0"/>    | <img src="https://latex.codecogs.com/svg.image?L_1" alt = "L_1"/> ||
+| 音声0データ       | <img src="https://latex.codecogs.com/svg.image?4+3N" alt = "4+3N"/>          | <img src="https://latex.codecogs.com/svg.image?L_0" alt = "L_0"/> ||
+| 音声1データ       | <img src="https://latex.codecogs.com/svg.image?4+3N+L_0" alt = "4+3N+L_0"/>    | <img src="https://latex.codecogs.com/svg.image?L_1" alt = "L_1"/> ||
 | ...               |                   |   ||
-| 音声nデータ       | <img src="https://latex.codecogs.com/svg.image?4 + 3N + \sum_{k=0}^{n-1}{L_k}" alt = "4 + 3N + \sum_{k=0}^{n-1}{L_k}"/>  | <img src="https://latex.codecogs.com/svg.image?L_n" alt = "L_n"/>||
+| 音声nデータ       | <img src="https://latex.codecogs.com/svg.image?4+3N+\sum_{k=0}^{n-1}{L_k}" alt = "4+3N+\sum_{k=0}^{n-1}{L_k}"/>  | <img src="https://latex.codecogs.com/svg.image?L_n" alt = "L_n"/>||
 | ...               |                   |   ||
 
 音声データはヘッダ部などを持たない純粋なデータのみ。
